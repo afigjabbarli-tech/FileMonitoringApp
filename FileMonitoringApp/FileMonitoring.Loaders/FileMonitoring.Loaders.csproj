@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\FileMonitoring.Core\FileMonitoring.Core.csproj" />
+  </ItemGroup>
+
 </Project>
