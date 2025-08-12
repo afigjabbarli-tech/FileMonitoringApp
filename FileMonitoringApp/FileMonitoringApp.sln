@@ -3,7 +3,17 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36401.2 d17.14
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoringApp", "FileMonitoringApp\FileMonitoringApp.csproj", "{ED15BB13-A178-417F-A48E-B98EF4D3B728}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoring.Core", "FileMonitoring.Core\FileMonitoring.Core.csproj", "{43491BB4-7CB9-45B3-B009-12ADD95433CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoring.Loaders", "FileMonitoring.Loaders\FileMonitoring.Loaders.csproj", "{7E4AE172-0B82-4F75-A95C-307711EC13AC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoring.UI", "FileMonitoring.UI\FileMonitoring.UI.csproj", "{39E03411-5CA4-4C2D-8754-B20998337F80}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoring.Tests", "FileMonitoring.Tests\FileMonitoring.Tests.csproj", "{FB1F2055-D330-4FD7-B7C7-004E23555C5B}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Plugins", "Plugins", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileMonitoring.Infrastructure", "FileMonitoring.Infrastructure\FileMonitoring.Infrastructure.csproj", "{298243AE-F4FB-4E37-9DAA-AAB8D97008B0}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -11,15 +21,31 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{ED15BB13-A178-417F-A48E-B98EF4D3B728}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{ED15BB13-A178-417F-A48E-B98EF4D3B728}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{ED15BB13-A178-417F-A48E-B98EF4D3B728}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{ED15BB13-A178-417F-A48E-B98EF4D3B728}.Release|Any CPU.Build.0 = Release|Any CPU
+		{43491BB4-7CB9-45B3-B009-12ADD95433CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{43491BB4-7CB9-45B3-B009-12ADD95433CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{43491BB4-7CB9-45B3-B009-12ADD95433CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{43491BB4-7CB9-45B3-B009-12ADD95433CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7E4AE172-0B82-4F75-A95C-307711EC13AC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7E4AE172-0B82-4F75-A95C-307711EC13AC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7E4AE172-0B82-4F75-A95C-307711EC13AC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7E4AE172-0B82-4F75-A95C-307711EC13AC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{39E03411-5CA4-4C2D-8754-B20998337F80}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{39E03411-5CA4-4C2D-8754-B20998337F80}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{39E03411-5CA4-4C2D-8754-B20998337F80}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{39E03411-5CA4-4C2D-8754-B20998337F80}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FB1F2055-D330-4FD7-B7C7-004E23555C5B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FB1F2055-D330-4FD7-B7C7-004E23555C5B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FB1F2055-D330-4FD7-B7C7-004E23555C5B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FB1F2055-D330-4FD7-B7C7-004E23555C5B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{298243AE-F4FB-4E37-9DAA-AAB8D97008B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{298243AE-F4FB-4E37-9DAA-AAB8D97008B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{298243AE-F4FB-4E37-9DAA-AAB8D97008B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{298243AE-F4FB-4E37-9DAA-AAB8D97008B0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
-		SolutionGuid = {FB213C9D-EF85-4D92-A4FD-EA6302BFD904}
+		SolutionGuid = {80382D32-3086-440F-9090-A55D8DF9FE18}
 	EndGlobalSection
 EndGlobal
