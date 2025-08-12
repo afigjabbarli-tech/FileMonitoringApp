@@ -1,4 +1,9 @@
 ﻿using FileMonitoring.Core.Interfaces;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading;
 
 namespace FileMonitoring.Infrastructure.Implementations
 {
@@ -8,6 +13,8 @@ namespace FileMonitoring.Infrastructure.Implementations
         private string _directory_path;
         private TimeSpan _interval;
         private HashSet<string> _existing_processed_files;
+        private readonly object _lock = new();
+        private bool _isChecking = false;
 
         public event EventHandler<string> NewFileDetected;
 
@@ -25,7 +32,11 @@ namespace FileMonitoring.Infrastructure.Implementations
         private bool IsProcessedFile(string file)
         {
             if (string.IsNullOrEmpty(file)) return false;
-            return _existing_processed_files.Contains(file);
+
+            lock (_lock)
+            {
+                return _existing_processed_files.Contains(file);
+            }
         }
 
         private bool IsValidPath(string path)
@@ -61,38 +72,64 @@ namespace FileMonitoring.Infrastructure.Implementations
             if (!IsValidPath(directoryPath))
                 throw new ArgumentException("Invalid directory path", nameof(directoryPath));
 
-            _directory_path = directoryPath;
-            _interval = interval;
+            lock (_lock)
+            {
+                _directory_path = directoryPath;
+                _interval = interval;
+                _existing_processed_files.Clear();
+            }
+
             _timer.Change(TimeSpan.Zero, _interval);
-            _existing_processed_files.Clear();
         }
 
         private void CheckDirectory(object? state)
         {
-            if (!IsValidPath(_directory_path)) return;
+            if (_isChecking) return;
 
-            if (!Directory.Exists(_directory_path)) return;
-
-            var filesInCurrentDirectory = Directory
-                .GetFiles(_directory_path, "*", SearchOption.TopDirectoryOnly);
-
-            foreach (var fileInCurrentDirectory in filesInCurrentDirectory)
+            _isChecking = true;
+            try
             {
-                if (IsProcessedFile(fileInCurrentDirectory)) continue;
+                if (!IsValidPath(_directory_path)) return;
 
-                _existing_processed_files.Add(fileInCurrentDirectory);
+                if (!Directory.Exists(_directory_path)) return;
 
-                NewFileDetected?.Invoke(this, fileInCurrentDirectory);
+                var filesInCurrentDirectory = Directory
+                    .GetFiles(_directory_path, "*", SearchOption.TopDirectoryOnly);
+
+                foreach (var fileInCurrentDirectory in filesInCurrentDirectory)
+                {
+                    bool alreadyProcessed;
+                    lock (_lock)
+                    {
+                        alreadyProcessed = IsProcessedFile(fileInCurrentDirectory);
+                        if (!alreadyProcessed)
+                        {
+                            _existing_processed_files.Add(fileInCurrentDirectory);
+                        }
+                    }
+
+                    if (alreadyProcessed) continue;
+
+                    NewFileDetected?.Invoke(this, fileInCurrentDirectory);
+                }
+            }
+            finally
+            {
+                _isChecking = false;
             }
         }
 
         public void Dispose()
         {
-            StopMonitoringProcess();     
-            _timer?.Dispose();
+            StopMonitoringProcess();
 
-            NewFileDetected = null; 
-            _existing_processed_files?.Clear();
+            lock (_lock)
+            {
+                _existing_processed_files?.Clear();
+                NewFileDetected = null;
+            }
+
+            _timer?.Dispose();
         }
     }
 }
