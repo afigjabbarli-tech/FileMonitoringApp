@@ -29,15 +29,15 @@ namespace FileMonitoring.Infrastructure.Implementations
             _timer = new Timer(CheckDirectory, null, Timeout.Infinite, Timeout.Infinite);
         }
 
-        private bool IsProcessedFile(string file)
-        {
-            if (string.IsNullOrEmpty(file)) return false;
+        //private bool IsProcessedFile(string file)
+        //{
+        //    if (string.IsNullOrEmpty(file)) return false;
 
-            lock (_lock)
-            {
-                return _existing_processed_files.Contains(file);
-            }
-        }
+        //    lock (_lock)
+        //    {
+        //        return _existing_processed_files.Contains(file);
+        //    }
+        //}
 
         private bool IsValidPath(string path)
         {
@@ -90,28 +90,39 @@ namespace FileMonitoring.Infrastructure.Implementations
             try
             {
                 if (!IsValidPath(_directory_path)) return;
-
                 if (!Directory.Exists(_directory_path)) return;
 
-                var filesInCurrentDirectory = Directory
-                    .GetFiles(_directory_path, "*", SearchOption.TopDirectoryOnly);
+                var filesInCurrentDirectory = Directory.GetFiles(_directory_path, "*", SearchOption.TopDirectoryOnly);
 
-                foreach (var fileInCurrentDirectory in filesInCurrentDirectory)
+                List<string> newFiles = new();
+
+                lock (_lock)
                 {
-                    bool alreadyProcessed;
-                    lock (_lock)
+                    foreach (var file in filesInCurrentDirectory)
                     {
-                        alreadyProcessed = IsProcessedFile(fileInCurrentDirectory);
-                        if (!alreadyProcessed)
+                        if (!_existing_processed_files.Contains(file))
                         {
-                            _existing_processed_files.Add(fileInCurrentDirectory);
+                            _existing_processed_files.Add(file);
+                            newFiles.Add(file);
                         }
                     }
-
-                    if (alreadyProcessed) continue;
-
-                    NewFileDetected?.Invoke(this, fileInCurrentDirectory);
                 }
+
+                foreach (var file in newFiles)
+                {
+                    Task.Run(() =>
+                    {
+                        try
+                        {
+                            NewFileDetected?.Invoke(this, file);
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                        }
+                    });
+                }
+
             }
             finally
             {

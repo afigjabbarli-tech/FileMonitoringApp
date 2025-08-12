@@ -12,6 +12,7 @@ namespace FileMonitoring.UI.ViewModels
         private readonly IFileMonitoringService _file_monitoring_service;
         private readonly List<ILoader> _loaders;
         public event PropertyChangedEventHandler? PropertyChanged;
+        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(8);
 
         private ObservableCollection<FinancialRecord> _financial_records = new();
         public ObservableCollection<FinancialRecord> FinancialRecords
@@ -32,19 +33,48 @@ namespace FileMonitoring.UI.ViewModels
             _file_monitoring_service.StartMonitoringProcess();
         }
 
-        private async void OnNewFileDetected(object? sender, string filePath)
+        private void OnNewFileDetected(object? sender, string filePath)
         {
-            var loader = _loaders.FirstOrDefault(l => l.CanLoad(filePath));
-            if (loader == null)
-                return;
-
-            var financialRecords = await loader.LoadAsync(filePath);
-
-            Application.Current.Dispatcher.Invoke(() =>
+            _ = Task.Run(async () =>
             {
-                foreach (var financialRecord in financialRecords)
+                await _semaphore.WaitAsync();
+                try
                 {
-                    FinancialRecords.Add(financialRecord);
+                    var loader = _loaders.FirstOrDefault(l => l.CanLoad(filePath));
+                    if (loader == null)
+                        return;
+
+                    List<FinancialRecord> financialRecords;
+                    try
+                    {
+                        financialRecords = await loader.LoadAsync(filePath);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                        return;
+                    }
+
+                    try
+                    {
+                        await Application.Current.Dispatcher.BeginInvoke(() =>
+                        {
+                            foreach (var record in financialRecords)
+                                FinancialRecords.Add(record);
+                        });
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine(ex.Message);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                finally
+                {
+                    _semaphore.Release();
                 }
             });
         }
