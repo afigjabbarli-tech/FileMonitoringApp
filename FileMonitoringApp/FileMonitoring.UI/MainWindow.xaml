@@ -3,7 +3,12 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="File Monitoring App" Height="450" Width="800">
     <Grid>
-        <DataGrid ItemsSource="{Binding FinancialRecords}" AutoGenerateColumns="False" IsReadOnly="True">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="3*" />
+            <RowDefinition Height="1*" />
+        </Grid.RowDefinitions>
+
+        <DataGrid Grid.Row="0" ItemsSource="{Binding FinancialRecords}" AutoGenerateColumns="False" IsReadOnly="True">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Date" Binding="{Binding Date, StringFormat=d}" Width="*" />
                 <DataGridTextColumn Header="Open" Binding="{Binding Open}" Width="*" />
@@ -13,5 +18,65 @@
                 <DataGridTextColumn Header="Volume" Binding="{Binding Volume}" Width="*" />
             </DataGrid.Columns>
         </DataGrid>
+
+        <Border Grid.Row="1" Background="#EEE" Padding="10">
+            <StackPanel>
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="3*" />
+                        <ColumnDefinition Width="2*" />
+                    </Grid.ColumnDefinitions>
+
+                    <StackPanel Grid.Column="0">
+                        <TextBlock Text="Configuration" FontWeight="Bold" FontSize="16" Margin="0,0,0,10"/>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="Watch Directory:" Width="150"/>
+                          
+                            <TextBox Width="400" Text="{Binding WatchDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="Interval (sec):" Width="150"/>
+                            <TextBox Width="100" Text="{Binding IntervalSeconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="Plugin Directory:" Width="150"/>
+                            <TextBox Width="400" Text="{Binding PluginDirectory, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" Margin="0,5">
+                            <Button Content="Save Config" 
+                            Width="120" Height="30" 
+                            Margin="0,10,0,0" 
+                            HorizontalAlignment="Right" 
+                            VerticalAlignment="Center"
+                            Command="{Binding SaveConfigCommand}"
+                            Background="#FF007ACC" 
+                            Foreground="White"
+                            FontWeight="Bold"/>             
+                        </StackPanel>
+                    </StackPanel>
+
+                    <StackPanel Grid.Column="1" Margin="10,0,0,0">
+                        <TextBlock Text="Active Loaders:" FontWeight="Bold" Margin="0,0,0,5" />
+                        <Border BorderBrush="Gray" BorderThickness="1" Background="White" Height="150">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <ItemsControl ItemsSource="{Binding AvailableLoaders}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <CheckBox Content="{Binding Name}" IsChecked="{Binding IsActive, Mode=TwoWay}" Margin="5,2"/>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </ScrollViewer>
+                        </Border>
+                    </StackPanel>
+                </Grid>
+
+                
+            </StackPanel>
+        </Border>
     </Grid>
 </Window>

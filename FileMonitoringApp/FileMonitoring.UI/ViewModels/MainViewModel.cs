@@ -1,36 +1,104 @@
 ﻿using FileMonitoring.Core.Interfaces;
 using FileMonitoring.Core.Models;
+using FileMonitoring.Loaders;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Linq;
 using System.Runtime.CompilerServices;
+using System.Threading;
 using System.Windows;
+using System.Windows.Input;
 
 namespace FileMonitoring.UI.ViewModels
 {
     public class MainViewModel : INotifyPropertyChanged
     {
-        private readonly IFileMonitoringService _file_monitoring_service;
-        private readonly List<ILoader> _loaders;
+        private readonly IFileMonitoringService _fileMonitoringService;
+        private readonly IPluginLoaderService _pluginLoaderService;
+        private readonly IConfigurationService _configurationService;
+
+        private List<ILoader> _allLoaders = new();
+
         public event PropertyChangedEventHandler? PropertyChanged;
-        private readonly SemaphoreSlim _semaphore = new SemaphoreSlim(8);
+        private readonly SemaphoreSlim _semaphore = new(8);
 
-        private ObservableCollection<FinancialRecord> _financial_records = new();
-        public ObservableCollection<FinancialRecord> FinancialRecords
+        public ObservableCollection<FinancialRecord> FinancialRecords { get; set; } = new();
+        public ObservableCollection<LoaderOption> AvailableLoaders { get; set; } = new();
+
+        private string _watchDirectory;
+        public string WatchDirectory
         {
-            get { return _financial_records; }
-            set
-            {
-                _financial_records = value;
-                OnPropertyChanged();
-            }
+            get => _watchDirectory;
+            set { _watchDirectory = value; OnPropertyChanged(); }
         }
-        public MainViewModel(IFileMonitoringService file_monitoring_service, List<ILoader> loaders)
-        {
-            _file_monitoring_service = file_monitoring_service;
-            _loaders = loaders;
 
-            _file_monitoring_service.NewFileDetected += OnNewFileDetected;
-            _file_monitoring_service.StartMonitoringProcess();
+        private int _intervalSeconds;
+        public int IntervalSeconds
+        {
+            get => _intervalSeconds;
+            set { _intervalSeconds = value; OnPropertyChanged(); }
+        }
+
+        private string _pluginDirectory;
+        public string PluginDirectory
+        {
+            get => _pluginDirectory;
+            set { _pluginDirectory = value; OnPropertyChanged(); }
+        }
+
+        public ICommand SaveConfigCommand { get; }
+
+        public MainViewModel(
+            IFileMonitoringService fileMonitoringService,
+            IPluginLoaderService pluginLoaderService,
+            IConfigurationService configurationService)
+        {
+            _fileMonitoringService = fileMonitoringService;
+            _pluginLoaderService = pluginLoaderService;
+            _configurationService = configurationService;
+
+            SaveConfigCommand = new RelayCommand(_ => SaveConfig());
+
+            LoadConfig();
+
+            _fileMonitoringService.NewFileDetected += OnNewFileDetected;
+            _fileMonitoringService.StartMonitoringProcess();
+        }
+
+        private void LoadConfig()
+        {
+            WatchDirectory = _configurationService.GetDirectoryToWatch();
+            IntervalSeconds = (int)_configurationService.GetMonitoringInterval().TotalSeconds;
+            PluginDirectory = _configurationService.GetPluginDirectory();
+
+            var pluginLoaders = _pluginLoaderService.InstallPluginsFromCurrentDirectory(PluginDirectory);
+
+            pluginLoaders.Add(new CsvLoader());
+            pluginLoaders.Add(new TxtLoader());
+            pluginLoaders.Add(new XmlLoader());
+
+            var activeNames = _configurationService.GetActiveLoaders();
+
+            AvailableLoaders.Clear();
+            foreach (var loader in pluginLoaders)
+            {
+                AvailableLoaders.Add(new LoaderOption
+                {
+                    Name = loader.GetType().Name,
+                    IsActive = activeNames.Contains(loader.GetType().Name)
+                });
+            }
+
+            _allLoaders = pluginLoaders.Where(l => activeNames.Contains(l.GetType().Name)).ToList();
+        }
+
+        public void SaveConfig()
+        {
+            var active = AvailableLoaders.Where(l => l.IsActive).Select(l => l.Name).ToList();
+            _configurationService.UpdateSettings(WatchDirectory, IntervalSeconds, PluginDirectory, active);
+
+            _fileMonitoringService.UpdateMonitoringSettings(WatchDirectory, TimeSpan.FromSeconds(IntervalSeconds));
+            LoadConfig();
         }
 
         private void OnNewFileDetected(object? sender, string filePath)
@@ -40,37 +108,17 @@ namespace FileMonitoring.UI.ViewModels
                 await _semaphore.WaitAsync();
                 try
                 {
-                    var loader = _loaders.FirstOrDefault(l => l.CanLoad(filePath));
+                    var loader = _allLoaders.FirstOrDefault(l => l.CanLoad(filePath));
                     if (loader == null)
                         return;
 
-                    List<FinancialRecord> financialRecords;
-                    try
-                    {
-                        financialRecords = await loader.LoadAsync(filePath);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                        return;
-                    }
+                    var records = await loader.LoadAsync(filePath);
 
-                    try
+                    await Application.Current.Dispatcher.BeginInvoke(() =>
                     {
-                        await Application.Current.Dispatcher.BeginInvoke(() =>
-                        {
-                            foreach (var record in financialRecords)
-                                FinancialRecords.Add(record);
-                        });
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine(ex.Message);
+                        foreach (var record in records)
+                            FinancialRecords.Add(record);
+                    });
                 }
                 finally
                 {
@@ -80,6 +128,6 @@ namespace FileMonitoring.UI.ViewModels
         }
 
         protected void OnPropertyChanged([CallerMemberName] string? name = null) =>
-        PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(name));
     }
 }

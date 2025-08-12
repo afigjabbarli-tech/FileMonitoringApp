@@ -7,9 +7,6 @@ using System.Windows;
 
 namespace FileMonitoring.UI
 {
-    /// <summary>
-    /// Interaction logic for App.xaml
-    /// </summary>
     public partial class App : Application
     {
         protected override void OnStartup(StartupEventArgs e)
@@ -26,13 +23,8 @@ namespace FileMonitoring.UI
                 new FileMonitoringService(configurationService.GetDirectoryToWatch(), configurationService.GetMonitoringInterval());
 
             IPluginLoaderService pluginLoaderService = new PluginLoaderService();
-            var loaders = pluginLoaderService.InstallPluginsFromCurrentDirectory("Plugins");
 
-            loaders.Add(new CsvLoader());
-            loaders.Add(new TxtLoader());
-            loaders.Add(new XmlLoader());
-
-            var mainViewModel = new MainViewModel(fileMonitoringService, loaders);
+            var mainViewModel = new MainViewModel(fileMonitoringService, pluginLoaderService, configurationService);
 
             var mainWindow = new MainWindow
             {
