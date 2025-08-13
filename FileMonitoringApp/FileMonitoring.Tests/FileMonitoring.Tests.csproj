@@ -17,6 +17,12 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\FileMonitoring.Core\FileMonitoring.Core.csproj" />
+    <ProjectReference Include="..\FileMonitoring.Infrastructure\FileMonitoring.Infrastructure.csproj" />
+    <ProjectReference Include="..\FileMonitoring.Loaders\FileMonitoring.Loaders.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Using Include="Xunit" />
   </ItemGroup>
 
